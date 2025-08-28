@@ -1,19 +1,26 @@
-# 🎈 Blank app template
+# Sistema Analítico Dinámico (Plan vs Real)
 
-A simple Streamlit app template for you to modify!
+Stack: Postgres, FastAPI, React (Vite), Docker Compose.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+## Uso rápido
 
-### How to run it on your own machine
+1. Crear `.env` (ya incluido con defaults).
+2. Levantar servicios:
 
-1. Install the requirements
+```bash
+docker compose --env-file .env up -d --build
+```
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+- API: http://localhost:${API_PORT}/api/health
+- Frontend: http://localhost:${FRONTEND_PORT}
 
-2. Run the app
+## Estructura
+- `db/migrations`: Esquema inicial montado a Postgres.
+- `api`: FastAPI con endpoints stub.
+- `frontend`: React + Vite con pantalla mínima.
+- `etl`: espacio para scripts pandas.
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+## Siguientes pasos
+- Implementar capa de acceso a datos y endpoints reales.
+- Agregar ETL (pandas) y loaders.
+- Crear jobs `recompute_metrics` y `recompute_alerts`.
