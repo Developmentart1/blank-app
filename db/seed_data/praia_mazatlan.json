@@ -1,0 +1,147 @@
+{
+  "configuracion_proyecto": {
+    "nombre": "Praia Mazatlán",
+    "ubicacion": "Mazatlán, Sinaloa",
+    "unidades_totales": 111,
+    "pisos": {
+      "4-6": {"unidades_por_piso": 7, "total": 21},
+      "7-25_sin_13": {"unidades_por_piso": 5, "total": 90}
+    }
+  },
+  "catalogos": {
+    "estado_torre": [
+      {"etiqueta": "🟨 Preventa", "color": "yellow", "orden": 1},
+      {"etiqueta": "🟦 Construcción", "color": "blue", "orden": 2},
+      {"etiqueta": "🟩 Comercialización", "color": "green", "orden": 3},
+      {"etiqueta": "✅ Entregada", "color": "gray", "orden": 4}
+    ]
+  },
+  "tablas_principales": {
+    "unidades": {
+      "campos_clave": [
+        {"nombre": "Número Unidad", "tipo": "Single line text", "primary": true},
+        {"nombre": "Piso", "tipo": "Number", "validacion": "4-25, excluir 13"},
+        {"nombre": "Posición", "tipo": "Formula", "formula": "RIGHT({Número Unidad}, 2)"},
+        {"nombre": "Tipología", "tipo": "Single Select", "opciones": ["Tipo A", "Tipo B", "Tipo C", "Tipo D"]},
+        {"nombre": "Vista", "tipo": "Single Select"},
+        {"nombre": "M² Totales", "tipo": "Number"},
+        {"nombre": "M² Balcón", "tipo": "Number"},
+        {"nombre": "Precio Lista", "tipo": "Currency"},
+        {"nombre": "Premium Vista", "tipo": "Formula", "formula": "SWITCH({Vista}, '🌊 Malecón-Vista Mar', 1.15, '🏝️ Malecón-Isla Piedra', 1.10, 1)"},
+        {"nombre": "Precio Final", "tipo": "Formula", "formula": "{Precio Lista} * {Premium Vista}"},
+        {"nombre": "Estado", "tipo": "Single Select"},
+        {"nombre": "Cajones Asignados", "tipo": "Link to Amenidades", "multiple": true},
+        {"nombre": "Bodega Asignada", "tipo": "Link to Amenidades"}
+      ]
+    },
+    "kyc": {
+      "campos_clave": [
+        {"nombre": "Folio KYC", "tipo": "Autonumber", "formato": "KYC-2024-{0000}"},
+        {"nombre": "Cliente", "tipo": "Link to Contactos"},
+        {"nombre": "Tipo Persona", "tipo": "Single Select", "opciones": ["👤 Física Nacional", "🌎 Física Extranjera", "🏢 Moral Nacional", "🌐 Moral Extranjera"]},
+        {"nombre": "Nivel Riesgo", "tipo": "Single Select", "opciones": ["🟢 Bajo", "🟡 Medio", "🟠 Alto", "🔴 Muy Alto"]},
+        {"nombre": "PEP", "tipo": "Checkbox"},
+        {"nombre": "Score AML", "tipo": "Number", "rango": "1-100"},
+        {"nombre": "% Completado", "tipo": "Formula", "formula": "{Documentos Completos} / {Total Requeridos} * 100"},
+        {"nombre": "Portal URL", "tipo": "Formula", "formula": "CONCATENATE('https://airtable.com/shrKYCPraia?prefill_KYC=', RECORD_ID())"}
+      ]
+    },
+    "planes_de_pago": {
+      "campos_clave": [
+        {"nombre": "Contrato", "tipo": "Link to Contratos"},
+        {"nombre": "Número Pago", "tipo": "Autonumber", "formato": "PAG-{0000}"},
+        {"nombre": "Concepto", "tipo": "Single Select", "opciones": ["Enganche", "Mensualidad", "Pago Final", "Extraordinario"]},
+        {"nombre": "Fecha Vencimiento", "tipo": "Date"},
+        {"nombre": "Monto Base", "tipo": "Currency"},
+        {"nombre": "Interés Moratorio", "tipo": "Formula", "formula": "IF(AND({Estado}='🔴 Vencido', {Días Vencido}>0), {Monto Base}*0.02*{Días Vencido}/30, 0)"},
+        {"nombre": "Días Vencido", "tipo": "Formula", "formula": "IF({Saldo}>0, DATETIME_DIFF(TODAY(), {Fecha Vencimiento}, 'days'), 0)"}
+      ]
+    },
+    "okrs": {
+      "campos_clave": [
+        {"nombre": "Objetivo", "tipo": "Long text"},
+        {"nombre": "Tipo OKR", "tipo": "Single Select", "opciones": ["🏢 Empresa", "🏗️ Proyecto", "👥 Departamento", "👤 Individual"]},
+        {"nombre": "Período", "tipo": "Single Select", "opciones": ["Q1 2024", "Q2 2024", "Q3 2024", "Q4 2024"]},
+        {"nombre": "Responsable", "tipo": "Link to Equipo"},
+        {"nombre": "Progreso Global", "tipo": "Rollup", "campo": "Key Results", "formula": "AVERAGE(values)"}
+      ]
+    }
+  },
+  "flujos_proceso": {
+    "venta_completa": [
+      "Lead → Cita → Cotización → Expediente → KYC → Contrato → Plan Pagos → Cobranza → Escrituración → Entrega → Post-venta"
+    ],
+    "financiero": [
+      "Contrato → Plan de Pagos → Cobranza → Tesorería → Comisiones"
+    ]
+  },
+  "automatizaciones_criticas": [
+    {
+      "nombre": "Generar Plan de Pagos",
+      "trigger": "Contrato.Estado = '📝 Firmado'",
+      "acciones": ["Crear enganche 30%", "Crear 24 mensualidades", "Crear pago final 10%"]
+    },
+    {
+      "nombre": "Crear Checklist KYC",
+      "trigger": "Nuevo registro KYC",
+      "acciones": ["Identificar tipo persona", "Crear documentos requeridos", "Enviar portal al cliente"]
+    },
+    {
+      "nombre": "Actualizar OKRs",
+      "trigger": "Diario 6 AM",
+      "acciones": ["Calcular ventas del período", "Actualizar % cobranza", "Contar leads calificados"]
+    },
+    {
+      "nombre": "Alertas Cobranza",
+      "trigger": "5 días antes vencimiento",
+      "acciones": ["Email a cliente", "SMS recordatorio", "Notificar vendedor"]
+    }
+  ],
+  "dashboards": {
+    "comercial": {
+      "nombre": "Dashboard Comercial Praia",
+      "widgets": [
+        {"tipo": "number", "nombre": "Inventario Disponible", "filtro": "Estado = '🟦 Disponible'"},
+        {"tipo": "chart", "nombre": "Velocidad por Vista", "tipo_grafico": "donut", "dimension": "Vista"},
+        {"tipo": "funnel", "nombre": "Pipeline Ventas", "etapas": ["Lead", "Visita", "Cotización", "Contrato"]},
+        {"tipo": "heatmap", "nombre": "Torre Disponibilidad", "filas": "Piso", "columnas": "Posición"}
+      ]
+    },
+    "financiero": {
+      "nombre": "Dashboard Financiero",
+      "widgets": [
+        {"tipo": "number", "nombre": "Cobranza del Mes", "suma": "Pagos recibidos"},
+        {"tipo": "chart", "nombre": "Morosidad", "categorias": ["Al corriente", "1-30", "31-60", "60+"]},
+        {"tipo": "timeline", "nombre": "Flujo de Caja", "proyeccion": "90 días"}
+      ]
+    },
+    "okr": {
+      "nombre": "Dashboard OKRs Q1",
+      "widgets": [
+        {"tipo": "gauge", "nombre": "Progreso Global", "meta": 100},
+        {"tipo": "chart", "nombre": "OKRs por Área", "tipo_grafico": "radar"},
+        {"tipo": "list", "nombre": "Key Results Críticos", "filtro": "Progreso < 40%"}
+      ]
+    },
+    "kyc_compliance": {
+      "nombre": "Dashboard KYC",
+      "widgets": [
+        {"tipo": "funnel", "nombre": "Pipeline KYC", "etapas": ["Iniciado", "Docs Parciales", "En Revisión", "Aprobado"]},
+        {"tipo": "number", "nombre": "Tiempo Promedio KYC", "calculo": "AVG días"},
+        {"tipo": "list", "nombre": "Alertas Alto Riesgo", "filtro": "Nivel = '🔴 Muy Alto'"}
+      ]
+    }
+  },
+  "scripts_inicializacion": {
+    "crear_unidades": "// Script para generar 111 unidades con nomenclatura correcta",
+    "setup_kyc": "// Script para configurar checklists por tipo de cliente",
+    "okrs_q1": "// Script para crear OKRs del trimestre",
+    "amenidades": "// Script para crear cajones y bodegas"
+  },
+  "validaciones": {
+    "no_piso_13": "IF(Piso = 13, ERROR('No existe piso 13'))",
+    "no_doble_venta": "IF(Estado != '🟦 Disponible', ERROR('Unidad no disponible'))",
+    "kyc_antes_contrato": "IF(Expediente.KYC.Estado != '✅ Aprobado', ERROR('KYC no aprobado'))",
+    "limite_descuento": "IF(Descuento > 0.10 AND !Aprobacion_Gerencial, ERROR('Requiere aprobación'))"
+  }
+}
